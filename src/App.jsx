@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Ticket, List, ChevronLeft, ChevronUp, ChevronDown, X } from 'lucide-react';
+import { Users, Ticket, List, ChevronLeft, ChevronUp, ChevronDown, X, RefreshCw, Wifi, WifiOff, AlertCircle } from 'lucide-react';
+
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2j9lG-gAe9fCNP7OFK0wf7gMQrl9qrA7dqFOrI_NYEld2rsBHHhPWzXvXu5oOliR/exec';
 
 export default function App() {
   const [turmas, setTurmas] = useState([]);
@@ -9,21 +11,68 @@ export default function App() {
   const [modalAberta, setModalAberta] = useState(false);
   const [alunoSelecionado, setAlunoSelecionado] = useState(null);
   const [valorTemporario, setValorTemporario] = useState(0);
+  const [salvando, setSalvando] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [online, setOnline] = useState(navigator.onLine);
+  const [erro, setErro] = useState(null);
+  const [ultimaSync, setUltimaSync] = useState(null);
 
   useEffect(() => {
     carregarDados();
+    
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    const interval = setInterval(() => {
+      if (navigator.onLine && !sincronizando) {
+        sincronizarComGoogle();
+      }
+    }, 30000);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
-  const carregarDados = () => {
+  const carregarDados = async () => {
+    setLoading(true);
+    setErro(null);
+    
+    console.log('Carregando dados... Online:', online);
+    console.log('URL configurado:', GOOGLE_SCRIPT_URL);
+    
+    if (online) {
+      console.log('Tentando sincronizar com Google Sheets...');
+      try {
+        const sucesso = await sincronizarComGoogle();
+        if (sucesso) {
+          console.log('Dados carregados do Google Sheets com sucesso!');
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao carregar do Google:', error);
+      }
+    } else {
+      console.log('Offline - usando dados locais');
+    }
+    
     try {
       const dados = localStorage.getItem('escola-bilhetes');
       if (dados) {
+        console.log('Carregando dados do localStorage');
         setTurmas(JSON.parse(dados));
       } else {
+        console.log('Usando dados iniciais padrão');
         const dadosIniciais = [
           { 
             id: '1', 
-            nome: 'R1A', 
+            nome: '10 A', 
             alunos: [
               { nome: 'Ana Silva', bilhetes: 0 },
               { nome: 'Bruno Costa', bilhetes: 0 },
@@ -32,7 +81,7 @@ export default function App() {
           },
           { 
             id: '2', 
-            nome: 'R1B', 
+            nome: '10 B', 
             alunos: [
               { nome: 'Diana Oliveira', bilhetes: 0 },
               { nome: 'Eduardo Lima', bilhetes: 0 }
@@ -40,39 +89,7 @@ export default function App() {
           },
           { 
             id: '3', 
-            nome: 'R2A',
-            alunos: [
-              { nome: 'Diana Oliveira', bilhetes: 0 },
-              { nome: 'Eduardo Lima', bilhetes: 0 }
-            ] 
-          },
-          { 
-            id: '4', 
-            nome: 'R2B',
-            alunos: [
-              { nome: 'Diana Oliveira', bilhetes: 0 },
-              { nome: 'Eduardo Lima', bilhetes: 0 }
-            ] 
-          },
-          { 
-            id: '5', 
-            nome: 'R23', 
-            alunos: [
-              { nome: 'Diana Oliveira', bilhetes: 0 },
-              { nome: 'Eduardo Lima', bilhetes: 0 }
-            ] 
-          },
-          { 
-            id: '6', 
-            nome: 'R3A', 
-            alunos: [
-              { nome: 'Diana Oliveira', bilhetes: 0 },
-              { nome: 'Eduardo Lima', bilhetes: 0 }
-            ] 
-          },
-          { 
-            id: '7', 
-            nome: 'R3B', 
+            nome: '11 A', 
             alunos: [
               { nome: 'Francisca Pinto', bilhetes: 0 },
               { nome: 'Gabriel Sousa', bilhetes: 0 },
@@ -82,20 +99,112 @@ export default function App() {
           }
         ];
         setTurmas(dadosIniciais);
-        salvarDados(dadosIniciais);
+        salvarLocal(dadosIniciais);
       }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      setErro('Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
   };
 
-  const salvarDados = (novasTurmas) => {
+  const sincronizarComGoogle = async () => {
+    if (!navigator.onLine) {
+      console.log('Offline - sincronização ignorada');
+      return false;
+    }
+    
+    if (sincronizando) {
+      console.log('Já está sincronizando...');
+      return false;
+    }
+    
+    setSincronizando(true);
+    setErro(null);
+    
+    try {
+      console.log('Iniciando sincronização...');
+      
+      const url = `${GOOGLE_SCRIPT_URL}?action=getTurmas&t=${Date.now()}`;
+      console.log('URL completo:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        cache: 'no-cache'
+      });
+      
+      console.log('Resposta:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('Dados recebidos:', data);
+      
+      if (data.success && data.turmas) {
+        console.log('Turmas carregadas:', data.turmas.length);
+        setTurmas(data.turmas);
+        salvarLocal(data.turmas);
+        setUltimaSync(new Date());
+        setSincronizando(false);
+        return true;
+      } else {
+        throw new Error(data.error || 'Erro ao buscar dados');
+      }
+    } catch (error) {
+      console.error('Erro na sincronização:', error);
+      setErro('Erro ao sincronizar: ' + error.message);
+      setSincronizando(false);
+      return false;
+    }
+  };
+
+  const salvarLocal = (novasTurmas) => {
     try {
       localStorage.setItem('escola-bilhetes', JSON.stringify(novasTurmas));
     } catch (error) {
-      console.error('Erro ao salvar:', error);
+      console.error('Erro ao salvar localmente:', error);
+    }
+  };
+
+  const salvarNoGoogle = async (novasTurmas) => {
+    if (!online) {
+      return false;
+    }
+    
+    try {
+      const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=saveTurmas`, {
+        method: 'POST',
+        body: JSON.stringify({ turmas: novasTurmas })
+      });
+      
+      const data = await response.json();
+      return data.success;
+    } catch (error) {
+      console.error('Erro ao salvar no Google:', error);
+      return false;
+    }
+  };
+
+  const logPedidoNoGoogle = async (turma, aluno, bilhetes) => {
+    if (!online) {
+      return;
+    }
+    
+    try {
+      await fetch(`${GOOGLE_SCRIPT_URL}?action=logPedido`, {
+        method: 'POST',
+        body: JSON.stringify({
+          turma: turma,
+          aluno: aluno,
+          bilhetes: bilhetes,
+          usuario: 'App Web'
+        })
+      });
+    } catch (error) {
+      console.error('Erro ao registar log:', error);
     }
   };
 
@@ -118,21 +227,41 @@ export default function App() {
     setValorTemporario(prev => Math.max(0, prev - 1));
   };
 
-  const confirmarValor = () => {
-    const novasTurmas = turmas.map(t =>
-      t.id === turmaSelecionada.id
-        ? {
-            ...t,
-            alunos: t.alunos.map(a =>
-              a.nome === alunoSelecionado.nome ? { ...a, bilhetes: valorTemporario } : a
-            )
-          }
-        : t
-    );
-    setTurmas(novasTurmas);
-    salvarDados(novasTurmas);
-    setTurmaSelecionada(novasTurmas.find(t => t.id === turmaSelecionada.id));
-    fecharModal();
+  const confirmarValor = async () => {
+    if (salvando) return;
+    
+    setSalvando(true);
+    
+    try {
+      const novasTurmas = turmas.map(t =>
+        t.id === turmaSelecionada.id
+          ? {
+              ...t,
+              alunos: t.alunos.map(a =>
+                a.nome === alunoSelecionado.nome ? { ...a, bilhetes: valorTemporario } : a
+              )
+            }
+          : t
+      );
+      
+      setTurmas(novasTurmas);
+      salvarLocal(novasTurmas);
+      
+      await salvarNoGoogle(novasTurmas);
+      await logPedidoNoGoogle(
+        turmaSelecionada.nome,
+        alunoSelecionado.nome,
+        valorTemporario
+      );
+      
+      setTurmaSelecionada(novasTurmas.find(t => t.id === turmaSelecionada.id));
+      fecharModal();
+    } catch (error) {
+      console.error('Erro ao confirmar:', error);
+      setErro('Erro ao salvar pedido');
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const obterAlunosComBilhetes = () => {
@@ -156,7 +285,10 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-indigo-600 text-xl">A carregar...</div>
+        <div className="text-center">
+          <RefreshCw className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
+          <div className="text-indigo-600 text-xl">A carregar dados...</div>
+        </div>
       </div>
     );
   }
@@ -175,6 +307,46 @@ export default function App() {
               <div className="text-2xl font-bold text-indigo-600">{totalBilhetes}</div>
             </div>
           </div>
+          
+          <div className="mt-4 flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              {online ? (
+                <>
+                  <Wifi className="w-4 h-4 text-green-600" />
+                  <span className="text-green-600">Online</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-4 h-4 text-orange-600" />
+                  <span className="text-orange-600">Offline</span>
+                </>
+              )}
+            </div>
+            
+            {online && (
+              <button
+                onClick={sincronizarComGoogle}
+                disabled={sincronizando}
+                className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${sincronizando ? 'animate-spin' : ''}`} />
+                <span>{sincronizando ? 'Sincronizando...' : 'Sincronizar'}</span>
+              </button>
+            )}
+          </div>
+          
+          {ultimaSync && (
+            <div className="mt-2 text-xs text-gray-500">
+              Ultima sincronizacao: {ultimaSync.toLocaleTimeString()}
+            </div>
+          )}
+          
+          {erro && (
+            <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-2">
+              <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
+              <span className="text-sm text-orange-800">{erro}</span>
+            </div>
+          )}
         </div>
 
         <div className="bg-white border-b border-gray-200 flex">
@@ -338,7 +510,8 @@ export default function App() {
             <div className="flex flex-col items-center gap-6 mb-8">
               <button
                 onClick={incrementar}
-                className="w-24 h-24 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg active:scale-95 transition flex items-center justify-center"
+                disabled={salvando}
+                className="w-24 h-24 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg active:scale-95 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronUp className="w-16 h-16" strokeWidth={3} />
               </button>
@@ -349,7 +522,8 @@ export default function App() {
 
               <button
                 onClick={decrementar}
-                className="w-24 h-24 bg-gray-600 hover:bg-gray-700 text-white rounded-2xl shadow-lg active:scale-95 transition flex items-center justify-center"
+                disabled={salvando}
+                className="w-24 h-24 bg-gray-600 hover:bg-gray-700 text-white rounded-2xl shadow-lg active:scale-95 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronDown className="w-16 h-16" strokeWidth={3} />
               </button>
@@ -358,15 +532,24 @@ export default function App() {
             <div className="flex gap-3">
               <button
                 onClick={fecharModal}
-                className="flex-1 py-4 px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl transition"
+                disabled={salvando}
+                className="flex-1 py-4 px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancelar
               </button>
               <button
                 onClick={confirmarValor}
-                className="flex-1 py-4 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition"
+                disabled={salvando}
+                className="flex-1 py-4 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Confirmar
+                {salvando ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    A guardar...
+                  </>
+                ) : (
+                  'Confirmar'
+                )}
               </button>
             </div>
           </div>
