@@ -23,7 +23,7 @@ export default function App() {
         const dadosIniciais = [
           { 
             id: '1', 
-            nome: '10º A', 
+            nome: '10 A', 
             alunos: [
               { nome: 'Ana Silva', bilhetes: 0 },
               { nome: 'Bruno Costa', bilhetes: 0 },
@@ -32,7 +32,7 @@ export default function App() {
           },
           { 
             id: '2', 
-            nome: '10º B', 
+            nome: '10 B', 
             alunos: [
               { nome: 'Diana Oliveira', bilhetes: 0 },
               { nome: 'Eduardo Lima', bilhetes: 0 }
@@ -40,7 +40,7 @@ export default function App() {
           },
           { 
             id: '3', 
-            nome: '11º A', 
+            nome: '11 A', 
             alunos: [
               { nome: 'Francisca Pinto', bilhetes: 0 },
               { nome: 'Gabriel Sousa', bilhetes: 0 },
@@ -123,31 +123,29 @@ export default function App() {
 
   if (loading) {
     return (
-      
-        A carregar...
-      
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-indigo-600 text-xl">A carregar...</div>
+      </div>
     );
   }
 
   return (
-    
-      
-        {/* Header */}
-        
-          
-            
-              
-              Pedidos de Bilhetes
-            
-            
-              Total de bilhetes
-              {totalBilhetes}
-            
-          
-        
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-t-2xl shadow-lg p-6 border-b-4 border-indigo-500">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Ticket className="w-8 h-8 text-indigo-600" />
+              <h1 className="text-2xl font-bold text-gray-800">Pedidos de Bilhetes</h1>
+            </div>
+            <div className="text-right">
+              <div className="text-sm text-gray-600">Total de bilhetes</div>
+              <div className="text-2xl font-bold text-indigo-600">{totalBilhetes}</div>
+            </div>
+          </div>
+        </div>
 
-        {/* Navegação */}
-        
+        <div className="bg-white border-b border-gray-200 flex">
           <button
             onClick={() => { setVista('turmas'); setTurmaSelecionada(null); }}
             className={`flex-1 py-4 px-6 font-medium transition ${
@@ -156,11 +154,11 @@ export default function App() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            
-              
+            <div className="flex items-center justify-center gap-2">
+              <Users className="w-5 h-5" />
               Turmas
-            
-          
+            </div>
+          </button>
           <button
             onClick={() => { setVista('relatorio'); setTurmaSelecionada(null); }}
             className={`flex-1 py-4 px-6 font-medium transition ${
@@ -169,17 +167,16 @@ export default function App() {
                 : 'text-gray-600 hover:text-gray-800'
             }`}
           >
-            
-              
-              Relatório ({obterAlunosComBilhetes().length})
-            
-          
-        
+            <div className="flex items-center justify-center gap-2">
+              <List className="w-5 h-5" />
+              Relatorio ({obterAlunosComBilhetes().length})
+            </div>
+          </button>
+        </div>
 
         {vista === 'turmas' && !turmaSelecionada ? (
-          /* Lista de Turmas */
-          
-            
+          <div className="bg-white rounded-b-2xl shadow-lg p-6">
+            <div className="space-y-3">
               {turmas.map(turma => {
                 const alunosComBilhetes = turma.alunos.filter(a => a.bilhetes > 0).length;
                 const totalTurma = turma.alunos.reduce((sum, a) => sum + a.bilhetes, 0);
@@ -190,144 +187,159 @@ export default function App() {
                     className="bg-gradient-to-r from-indigo-50 to-purple-50 p-5 rounded-xl border-2 border-indigo-100 hover:border-indigo-300 transition cursor-pointer"
                     onClick={() => { setTurmaSelecionada(turma); setVista('turmas'); }}
                   >
-                    
-                      
-                        {turma.nome}
-                        {turma.alunos.length} aluno(s)
-                      
-                      
-                        Pedidos
-                        {totalTurma}
-                        {alunosComBilhetes} aluno(s)
-                      
-                    
-                  
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-xl text-gray-800">{turma.nome}</h3>
+                        <p className="text-sm text-gray-600">{turma.alunos.length} alunos</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">Pedidos</div>
+                        <div className="text-2xl font-bold text-indigo-600">{totalTurma}</div>
+                        <div className="text-xs text-gray-500">{alunosComBilhetes} alunos</div>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
-            
-          
+            </div>
+          </div>
         ) : vista === 'turmas' && turmaSelecionada ? (
-          /* Detalhes da Turma */
-          
+          <div className="bg-white rounded-b-2xl shadow-lg p-6">
             <button
               onClick={() => setTurmaSelecionada(null)}
               className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 mb-4 font-medium"
             >
-              
-              Voltar às turmas
-            
+              <ChevronLeft className="w-5 h-5" />
+              Voltar as turmas
+            </button>
 
-            {turmaSelecionada.nome}
-            Toque num aluno para registar bilhetes
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">{turmaSelecionada.nome}</h2>
+            <p className="text-gray-600 mb-6">Toque num aluno para registar bilhetes</p>
 
-            
+            <div className="space-y-3">
               {turmaSelecionada.alunos.map((aluno, idx) => (
                 <div
                   key={idx}
                   onClick={() => abrirModal(aluno)}
                   className="bg-gray-50 p-4 rounded-lg border-2 border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition cursor-pointer"
                 >
-                  
-                    
-                      {aluno.nome}
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-800 text-lg">{aluno.nome}</div>
                       {aluno.bilhetes > 0 && (
-                        
-                          {aluno.bilhetes} bilhete(s) pedido(s)
-                        
+                        <div className="text-sm text-indigo-600 mt-1 font-medium">
+                          {aluno.bilhetes} bilhetes pedidos
+                        </div>
                       )}
-                    
-                    
+                    </div>
+                    <div className="text-3xl font-bold text-indigo-600">
                       {aluno.bilhetes}
-                    
-                  
-                
+                    </div>
+                  </div>
+                </div>
               ))}
-            
-          
+            </div>
+          </div>
         ) : (
-          /* Relatório */
-          
-            Alunos com Pedidos de Bilhetes
+          <div className="bg-white rounded-b-2xl shadow-lg p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Alunos com Pedidos de Bilhetes</h2>
             
             {obterAlunosComBilhetes().length > 0 ? (
-              
+              <div className="space-y-3">
                 {obterAlunosComBilhetes().map((aluno, idx) => (
-                  
-                    
-                      
-                        {aluno.nome}
-                        {aluno.turma}
-                      
-                      
-                        {aluno.bilhetes}
-                        bilhetes
-                      
-                    
-                  
+                  <div
+                    key={idx}
+                    className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border-2 border-green-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-bold text-gray-800">{aluno.nome}</div>
+                        <div className="text-sm text-gray-600">{aluno.turma}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-green-600">{aluno.bilhetes}</div>
+                        <div className="text-xs text-gray-600">bilhetes</div>
+                      </div>
+                    </div>
+                  </div>
                 ))}
                 
-                
-                  
-                    Total Geral
-                    {totalBilhetes}
-                  
-                  
-                    {obterAlunosComBilhetes().length} aluno(s) com pedidos
-                  
-                
-              
+                <div className="mt-6 p-5 bg-indigo-50 rounded-xl border-2 border-indigo-200">
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-gray-800 text-lg">Total Geral</div>
+                    <div className="text-3xl font-bold text-indigo-600">{totalBilhetes}</div>
+                  </div>
+                  <div className="text-sm text-gray-600 mt-2">
+                    {obterAlunosComBilhetes().length} alunos com pedidos
+                  </div>
+                </div>
+              </div>
             ) : (
-              
-                
-                Ainda não há pedidos de bilhetes registados
-                Vá às turmas para começar a registar pedidos
-              
+              <div className="text-center py-12 text-gray-500">
+                <Ticket className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg">Ainda nao ha pedidos de bilhetes registados</p>
+                <p className="text-sm mt-2">Va as turmas para comecar a registar pedidos</p>
+              </div>
             )}
-          
+          </div>
         )}
-      
+      </div>
 
-      {/* Modal */}
       {modalAberta && (
-        
-          
-            
-              Registar Bilhetes
-              
-                
-              
-            
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Registar Bilhetes</h3>
+              <button
+                onClick={fecharModal}
+                className="text-gray-400 hover:text-gray-600 p-1"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
 
-            
-              {alunoSelecionado?.nome}
-              {turmaSelecionada?.nome}
-            
+            <div className="text-center mb-8">
+              <div className="text-lg font-semibold text-gray-700 mb-2">{alunoSelecionado?.nome}</div>
+              <div className="text-sm text-gray-500">{turmaSelecionada?.nome}</div>
+            </div>
 
-            
-              
-                
-              
+            <div className="flex flex-col items-center gap-6 mb-8">
+              <button
+                onClick={incrementar}
+                className="w-24 h-24 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-lg active:scale-95 transition flex items-center justify-center"
+              >
+                <ChevronUp className="w-16 h-16" strokeWidth={3} />
+              </button>
 
-              
+              <div className="text-6xl font-bold text-indigo-600 min-w-[120px] text-center">
                 {valorTemporario}
-              
+              </div>
 
-              
-                
-              
-            
+              <button
+                onClick={decrementar}
+                className="w-24 h-24 bg-gray-600 hover:bg-gray-700 text-white rounded-2xl shadow-lg active:scale-95 transition flex items-center justify-center"
+              >
+                <ChevronDown className="w-16 h-16" strokeWidth={3} />
+              </button>
+            </div>
 
-            
-              
+            <div className="flex gap-3">
+              <button
+                onClick={fecharModal}
+                className="flex-1 py-4 px-6 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl transition"
+              >
                 Cancelar
-              
-              
+              </button>
+              <button
+                onClick={confirmarValor}
+                className="flex-1 py-4 px-6 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition"
+              >
                 Confirmar
-              
-            
-          
-        
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-    
+    </div>
   );
 }
