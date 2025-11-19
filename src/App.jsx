@@ -3,7 +3,6 @@ import { Users, Ticket, List, ChevronLeft, ChevronUp, ChevronDown, X, RefreshCw,
 
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB2j9lG-gAe9fCNP7OFK0wf7gMQrl9qrA7dqFOrI_NYEld2rsBHHhPWzXvXu5oOliR/exec';
 
-
 export default function App() {
   const [turmas, setTurmas] = useState([]);
   const [turmaSelecionada, setTurmaSelecionada] = useState(null);
