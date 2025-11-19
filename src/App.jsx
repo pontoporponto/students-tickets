@@ -23,7 +23,7 @@ export default function App() {
         const dadosIniciais = [
           { 
             id: '1', 
-            nome: '10 A', 
+            nome: 'R1A', 
             alunos: [
               { nome: 'Ana Silva', bilhetes: 0 },
               { nome: 'Bruno Costa', bilhetes: 0 },
@@ -32,7 +32,7 @@ export default function App() {
           },
           { 
             id: '2', 
-            nome: '10 B', 
+            nome: 'R1B', 
             alunos: [
               { nome: 'Diana Oliveira', bilhetes: 0 },
               { nome: 'Eduardo Lima', bilhetes: 0 }
@@ -40,7 +40,39 @@ export default function App() {
           },
           { 
             id: '3', 
-            nome: '11 A', 
+            nome: 'R2A',
+            alunos: [
+              { nome: 'Diana Oliveira', bilhetes: 0 },
+              { nome: 'Eduardo Lima', bilhetes: 0 }
+            ] 
+          },
+          { 
+            id: '4', 
+            nome: 'R2B',
+            alunos: [
+              { nome: 'Diana Oliveira', bilhetes: 0 },
+              { nome: 'Eduardo Lima', bilhetes: 0 }
+            ] 
+          },
+          { 
+            id: '5', 
+            nome: 'R23', 
+            alunos: [
+              { nome: 'Diana Oliveira', bilhetes: 0 },
+              { nome: 'Eduardo Lima', bilhetes: 0 }
+            ] 
+          },
+          { 
+            id: '6', 
+            nome: 'R3A', 
+            alunos: [
+              { nome: 'Diana Oliveira', bilhetes: 0 },
+              { nome: 'Eduardo Lima', bilhetes: 0 }
+            ] 
+          },
+          { 
+            id: '7', 
+            nome: 'R3B', 
             alunos: [
               { nome: 'Francisca Pinto', bilhetes: 0 },
               { nome: 'Gabriel Sousa', bilhetes: 0 },
